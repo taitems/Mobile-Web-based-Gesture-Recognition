@@ -1,80 +1,187 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-	<title>taitems/Mobile-Web-based-Gesture-Recognition @ GitHub</title>
+	<title>Gestures</title>
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<link rel="apple-touch-icon-precomposed" href="itouch.png">
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+	<script type="text/javascript" src="http://depts.washington.edu/aimgroup/proj/dollar/dollar.js"></script>
+	<script type="text/javascript">
 	
+		var oldX; var oldY;
+		var canvas;
+		var ctx;
+		var _r = new DollarRecognizer();
+		var _points = [];
+		var isMouseDown = false; // mouse only bool
+		var threshold = 3; // number of pixels required to be moved for a movement to count
+		
+	
+		document.addEventListener('touchstart', function(e) {
+			e.preventDefault();
+			_points = [];
+			var touch = e.touches[0];
+			ctx.beginPath();
+			ctx.strokeStyle = "#bae1ff";
+			ctx.lineCap = "round";
+			ctx.lineJoin = "round";
+			ctx.lineWidth = 6;
+			oldX = touch.pageX;
+			oldY = touch.pageY;
+		}, false);
+		
+		document.addEventListener('touchmove', function(e) {
+			if (oldX - e.pageX < 3 && oldX - e.pageX > -3) {
+				return;
+			}
+			if (oldY - e.pageY < 3 && oldY - e.pageY > -3) {
+				return;
+			}
+			var touch = e.touches[0];
+			ctx.moveTo(oldX,oldY);
+			oldX = touch.pageX;
+			oldY = touch.pageY;
+			ctx.lineTo(oldX,oldY);
+			ctx.stroke();
+			ctx.shadowColor = 'rgba(169,236,255,0.25)';
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = 0;
+			ctx.shadowBlur = 10;
+			_points[_points.length] = new Point(oldX,oldY);
+		}, false);
+		
+		document.addEventListener('touchend', function(e) {
+			ctx.closePath();
+			if (_points.length >= 10) {
+				var result = _r.Recognize(_points);
+				$("#shapeOutput").text(result.Name);
+				$("#mathOutput").text(Math.round(result.Score*100) + "%");
+			}
+			_points = [];
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+		}, false);
+		
+		window.addEventListener("load", function(e) {
+			canvas = document.getElementById("canvas");  
+			ctx = canvas.getContext("2d");
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			shadowWrapper.width = window.innerWidth;
+			shadowWrapper.height = window.innerHeight;
+		}, false);
+		
+		
+		
+		
+		// MOUSE BINDS FOR THE HELL OF IT
+		document.addEventListener('mousedown', function(e) {
+			isMouseDown = true;
+			e.preventDefault();
+			_points = [];
+			ctx.beginPath();
+			ctx.strokeStyle = "#bae1ff";
+			ctx.lineCap = "round";
+			ctx.lineJoin = "round";
+			ctx.lineWidth = 6;
+			ctx.shadowColor = 'rgba(169,236,255,0.1)';
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = 0;
+			ctx.shadowBlur = 10;
+			oldX = e.pageX;
+			oldY = e.pageY;
+		}, false);
+		
+		document.addEventListener('mousemove', function(e) {
+			if (!isMouseDown) {
+				return;
+			}
+			if (oldX - e.pageX < 3 && oldX - e.pageX > -3) {
+				return;
+			}
+			if (oldY - e.pageY < 3 && oldY - e.pageY > -3) {
+				return;
+			}
+			ctx.moveTo(oldX,oldY);
+			oldX = e.pageX;
+			oldY = e.pageY;
+			ctx.lineTo(oldX,oldY);
+			ctx.stroke();
+			_points[_points.length] = new Point(oldX,oldY);
+		}, false);
+		
+		document.addEventListener('mouseup', function(e) {
+			isMouseDown = false;
+			ctx.closePath();
+			if (_points.length >= 10) {
+				var result = _r.Recognize(_points);
+				$("#shapeOutput").text(result.Name);
+				$("#mathOutput").text(Math.round(result.Score*100) + "%");
+			}
+			_points = [];
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+		}, false);
+		
+	</script>
 	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
-  		background-color: #809a5a;
-		  font-family: "Helvetica,Arial,FreeSans";
-  		color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-		h1 { font-size: 3.8em; color: #7f65a5; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #7f65a5; }
-    h3 { text-align: center; color: #7f65a5; }
-    a { color: #7f65a5; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
+		body { background: #131b1e url(tron_grid_2.png) 0 0 repeat; margin: 0; padding: 0; font-family: Helvetica; }
+		#output { 
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			padding: 1em 0;
+			width: 100%;
+			border-top: 1px solid #08090e;
+			background: #0e151a;
+			-webkit-box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 0 2em rgba(255,255,255,0.15);
+			-moz-box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 0 2em rgba(255,255,255,0.15);
+			background-image: -webkit-gradient(
+				linear,
+				left top,
+				left bottom,
+				color-stop(0, rgb(31,47,59)),
+				color-stop(1, rgb(6,10,11))
+			);
+			background-image: -moz-linear-gradient(
+				center top,
+				rgb(31,47,59) 0%,
+				rgb(6,10,11) 100%
+			);
+		}
+		#shapeOutput { 
+			color: #7c919e;
+			font-size: 1.125em;
+			font-weight: bold;
+			text-shadow: 0 -1px 0 rgba(0,0,0,0.8);
+			text-transform: capitalize;
+			float: left;
+			padding-left: 1em;
+		}
+		#mathOutput {
+			color: #7c919e;
+			font-size: 1.125em;
+			opacity: 0.7;
+			float: right;
+			padding-right: 1em;
+		}
 	</style>
-	
+
 </head>
 
 <body>
-  <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+	
+	<canvas id="canvas"></canvas>
+	
+	<div id="output">
+	
+		<div id="shapeOutput">Gesture Recognition</div>
+		
+		<div id="mathOutput">0%</div>
+	
+	</div>
 
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition">Mobile-Web-based-Gesture-Recognition</a>
-      <span class="small">by <a href="http://github.com/taitems">taitems</a></span></h1>
-
-    <div class="description">
-      
-    </div>
-
-    <h2>Authors</h2>
-<p>taitems (taitbrown@gmail.com)<br/><br/>      </p>
-<h2>Contact</h2>
-<p>Tait Brown (taitbrown@gmail.com)<br/>      </p>
-
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition/zipball/master">zip</a> or
-      <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/taitems/Mobile-Web-based-Gesture-Recognition</pre>
-    </p>
-
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/taitems/Mobile-Web-based-Gesture-Recognition">taitems/Mobile-Web-based-Gesture-Recognition</a>
-    </div>
-
-  </div>
-
-  
 </body>
-</html>
+
+</html> 
